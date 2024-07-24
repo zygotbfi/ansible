@@ -5,7 +5,7 @@
   tasks:
     - name: Ensure the target directory exists
       file:
-        path: /opt/test
+        path: /opt/test/
         state: directory
         mode: '0755'
 

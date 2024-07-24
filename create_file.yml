@@ -1,0 +1,18 @@
+---
+- name: Create a file in a specific folder on remote servers
+  hosts: servers
+  become: yes
+  tasks:
+    - name: Ensure the target directory exists
+      file:
+        path: /opt/test
+        state: directory
+        mode: '0755'
+
+    - name: Create a file with specific content
+      copy:
+        dest: /opt/test/your_file.txt
+        content: |
+          This is a test file.
+          Add your content here.
+        mode: '0644'

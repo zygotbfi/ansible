@@ -1,15 +1,21 @@
 ---
-- name: Create a file in a specific folder on remote servers
+- name: Ensure /opt/test directory exists and create a file
   hosts: servers
   become: yes
   tasks:
-    - name: Ensure the target directory exists
+    - name: Ensure the /opt directory exists
       file:
-        path: /opt/test/
+        path: /opt
         state: directory
         mode: '0755'
 
-    - name: Create a file with specific content
+    - name: Ensure the /opt/test directory exists with correct permissions
+      file:
+        path: /opt/test
+        state: directory
+        mode: '0777'
+
+    - name: Create a file in /opt/test
       copy:
         dest: /opt/test/your_file.txt
         content: |

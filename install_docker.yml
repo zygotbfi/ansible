@@ -8,6 +8,63 @@
 
   tasks:
     - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Ensure python3 is installed
+      apt:
+        name: python3
+        state: present
+
+    - name: Ensure python3-pip is installed
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Ensure python3-apt is installed
+      apt:
+        name: python3-apt
+        state: present
+
+    - name: Ensure python3-venv is installed
+      apt:
+        name: python3-venv
+        state: present
+
+    - name: Ensure build-essential is installed
+      apt:
+        name: build-essential
+        state: present
+
+    - name: Ensure libffi-dev is installed
+      apt:
+        name: libffi-dev
+        state: present
+
+    - name: Ensure libssl-dev is installed
+      apt:
+        name: libssl-dev
+        state: present
+
+    - name: Ensure Ansible is installed via pip
+      pip:
+        name: ansible
+        state: present
+        executable: pip3
+
+    - name: Ensure required Ansible collections are installed
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install -r requirements.yml
+      args:
+        creates: /etc/ansible/collections/ansible_collections
+
+    - name: Ensure required Ansible roles are installed
+      ansible.builtin.command:
+        cmd: ansible-galaxy role install -r requirements.yml
+      args:
+        creates: /etc/ansible/roles
+
+    - name: Update apt cache
       become: yes
       become_user: root
       apt:
@@ -55,3 +112,12 @@
         name: "{{ ansible_user }}"
         groups: docker
       when: docker_installed.rc == 0
+      
+  handlers:
+    - name: Restart necessary services
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - docker
+        - docker-compose

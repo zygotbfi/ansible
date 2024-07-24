@@ -1,54 +1,53 @@
----
-- name: Install Docker on remote server
-  hosts: servers
+name: Install Docker and Docker Compose
+  hosts: all
   become: yes
+  vars:
+    docker_compose_version: latest
+
   tasks:
-    - name: Update apt package index
+    - name: Update apt cache
+      become: yes
       apt:
         update_cache: yes
 
-    - name: Install packages to allow apt to use a repository over HTTPS
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
-        state: present
+    - name: Check if Docker is installed
+      command: "docker --version"
+      ignore_errors: true
+      register: docker_installed
 
-    - name: Add Docker’s official GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    - name: Check if Docker Compose is installed
+      command: "docker-compose --version"
+      ignore_errors: true
+      register: docker_compose_installed
 
-    - name: Set up the Docker stable repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
-        state: present
+    - name: Install Docker if not already installed
+      shell: >
+        curl -fsSL https://get.docker.com -o get-docker.sh && \
+        sudo sh get-docker.sh
+      when: docker_installed.rc != 0
 
-    - name: Update apt package index again
-      apt:
-        update_cache: yes
+    - name: Get latest Docker Compose version from GitHub
+      when: docker_compose_version == 'latest'
+      become: no
+      uri:
+        url: https://api.github.com/repos/docker/compose/releases/latest
+        return_content: yes
+      register: docker_compose_latest
 
-    - name: Install Docker
-      apt:
-        name: docker-ce
-        state: present
+    - name: Extract latest version number
+      when: docker_compose_version == 'latest'
+      set_fact:
+        docker_compose_version: "{{ docker_compose_latest.json.tag_name }}"
 
     - name: Install Docker Compose
-      get_url:
-        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)
-        dest: /usr/local/bin/docker-compose
-        mode: '0755'
+      become: yes
+      shell: >
+        sudo curl -L "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
+        sudo chmod +x /usr/local/bin/docker-compose
+      when: docker_compose_installed.rc != 0
 
-    - name: Start Docker service
-      systemd:
-        name: docker
-        state: started
-        enabled: yes
-
-    - name: Add user to Docker group
+    - name: Add user to docker group
       user:
         name: "{{ ansible_user }}"
         groups: docker
-        append: yes
+      when: docker_installed.rc == 0

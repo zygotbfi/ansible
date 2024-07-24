@@ -2,12 +2,14 @@
 - name: Install Docker and Docker Compose
   hosts: all
   become: yes
+  become_user: root
   vars:
     docker_compose_version: latest
 
   tasks:
     - name: Update apt cache
       become: yes
+      become_user: root
       apt:
         update_cache: yes
 
@@ -42,6 +44,7 @@
 
     - name: Install Docker Compose
       become: yes
+      become_user: root
       shell: >
         sudo curl -L "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
         sudo chmod +x /usr/local/bin/docker-compose

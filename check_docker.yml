@@ -1,0 +1,19 @@
+---
+- name: Check if Docker is installed on remote servers
+  hosts: servers
+  gather_facts: no
+  tasks:
+    - name: Check Docker version
+      shell: docker --version
+      register: docker_version
+      ignore_errors: yes
+
+    - name: Print Docker version
+      debug:
+        msg: "Docker is installed: {{ docker_version.stdout }}"
+      when: docker_version.rc == 0
+
+    - name: Print Docker not installed message
+      debug:
+        msg: "Docker is not installed."
+      when: docker_version.rc != 0

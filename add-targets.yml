@@ -1,0 +1,79 @@
+- name: Edit Existing Prometheus Job Configuration
+  hosts: eut
+  gather_facts: no
+  become: yes  
+
+  tasks:
+    - name: Ensure backup directory exists
+      ansible.builtin.file:
+        path: /opt/ansible-test/grafana-test/prometheus/backup
+        state: directory
+        mode: '0755'
+
+    - name: Get current date and time
+      ansible.builtin.shell: "date '+%Y%m%d%H%M%S'"
+      register: current_time
+
+    - name: Create backup of the current Prometheus config
+      ansible.builtin.copy:
+        src: /opt/ansible-test/grafana-test/prometheus/prometheus.yml
+        dest: "/opt/ansible-test/grafana-test/prometheus/backup/prometheus.yml.bak{{ current_time.stdout }}"
+        remote_src: yes
+
+    - name: Load existing Prometheus config
+      ansible.builtin.slurp:
+        src: /opt/ansible-test/grafana-test/prometheus/prometheus.yml
+      register: prometheus_config
+
+    - name: Convert config to dictionary
+      set_fact:
+        prometheus_dict: "{{ (prometheus_config['content'] | b64decode | from_yaml) }}"
+
+    - name: Extract job names
+      set_fact:
+        job_names: "{{ prometheus_dict.scrape_configs | map(attribute='job_name') | list }}"
+
+    - name: Display all job names
+      debug:
+        msg: "Available job names: {{ job_names }}"
+
+    - name: Prompt for job name
+      pause:
+        prompt: "Enter the job name to edit from the list above"
+      register: user_input
+
+    - name: Set job name variable
+      set_fact:
+        job_name: "{{ user_input.user_input }}"
+
+    - name: Prompt for new targets
+      pause:
+        prompt: "Enter the new targets to add (comma-separated, e.g., 192.168.1.1:9100,192.168.1.2:9100)"
+      register: targets_input
+
+    - name: Set new targets variable
+      set_fact:
+        new_targets: "{{ targets_input.user_input.split(',') }}"
+
+    - name: Update targets for the specified job
+      set_fact:
+        updated_scrape_configs: >-
+          [
+            {% for item in prometheus_dict.scrape_configs %}
+              {% if item.job_name == job_name %}
+                {% set existing_targets = item.static_configs[0].targets %}
+                {{ item | combine({'static_configs': [{'targets': existing_targets + new_targets}]}, recursive=True) }},
+              {% else %}
+                {{ item }},
+              {% endif %}
+            {% endfor %}
+          ]
+
+    - name: Save the updated scrape_configs back to prometheus_dict
+      set_fact:
+        prometheus_dict: "{{ prometheus_dict | combine({'scrape_configs': updated_scrape_configs}, recursive=True) }}"
+
+    - name: Save modified config
+      ansible.builtin.copy:
+        dest: /opt/ansible-test/grafana-test/prometheus/prometheus.yml
+        content: "{{ prometheus_dict | to_yaml }}"

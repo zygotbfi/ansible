@@ -1,0 +1,26 @@
+- name: Copy Docker Compose and Netdata Config Files
+  hosts: eut
+  become: yes
+  vars_prompt:
+    - name: host_name
+      prompt: "Enter the host name"
+      private: no
+  tasks:
+    - name: Ensure the directory exists
+      file:
+        path: /opt/ansible-test/netdata-test
+        state: directory
+        mode: '0755'
+
+    - name: Copy docker-compose.yml with dynamic hostname
+      template:
+        src: ./netdata/docker-compose.yml.j2
+        dest: /opt/ansible-test/netdata-test/docker-compose.yml
+      vars:
+        hostname: "{{ host_name }}"
+
+    - name: Copy netdata.conf
+      copy:
+        src: ./netdata/netdata.conf
+        dest: /opt/ansible-test/netdata-test/netdata.conf
+

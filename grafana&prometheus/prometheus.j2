@@ -1,0 +1,56 @@
+# my global config
+global:
+  scrape_interval: 3m # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+
+  - job_name: "RDS_WMI"
+    static_configs:
+      - targets: ["18.138.149.124:9182","52.220.141.215:9182"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090","172.16.4.182:9091"]
+
+  - job_name: "CLOUD NETDATA"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    metrics_path: /api/v1/allmetrics
+    params:
+      format: [prometheus_all_hosts]
+    static_configs:
+      - targets: ["52.74.227.243:19999","18.142.200.63:19999","94.237.65.245:19999","94.237.78.7:19999","94.237.68.120:19999","94.237.65.245:19999","94.237.78.165:19999","95.111.192.198:19999"]
+
+  - job_name: "hana & SL server"
+    metrics_path: /api/v1/allmetrics
+    params:
+      format: [prometheus_all_hosts]
+
+    static_configs:
+      - targets: ["18.138.78.210:19999", "18.141.110.57:19999"]
+
+  - job_name: "node-exporters"
+    static_configs:
+      - targets: ["192.168.32.15:9100","192.168.33.75:9100","18.141.110.57:9100", "18.138.78.210:9100", "94.237.65.245:9100","94.237.78.7:9100","94.237.68.120:9100","94.237.65.245:9100","94.237.78.165:9100","95.111.192.198:9100","18.142.200.63:9100","52.74.227.243:9100","172.17.122.195:9100"]
+
+  - job_name: "data-analytics_PG"
+    metrics_path: /api/v1/allmetrics
+    params:
+      format: [prometheus_all_hosts]
+    static_configs:
+      - targets: ["192.168.33.75:19999"]
+
+  - job_name: "ETL-PENTAHO"
+    metrics_path: /api/v1/allmetrics
+    params:
+      format: [prometheus_all_hosts]
+    static_configs:
+      - targets: ["192.168.32.15:19999"]
+
+  - job_name: "ASP.NET"
+    static_configs:
+      - targets: ["172.16.28.3:44325"]

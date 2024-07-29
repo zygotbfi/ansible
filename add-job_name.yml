@@ -1,0 +1,52 @@
+- name: Add New Prometheus Job Configuration
+  hosts: eut
+  gather_facts: no
+  become: yes
+
+  vars_prompt:
+    - name: job_name
+      prompt: "Enter the new job name"
+      private: no
+
+    - name: new_targets
+      prompt: "Enter the targets for the new job (comma-separated, e.g., '192.168.1.1:9100,192.168.1.2:9100')"
+      private: no
+
+    - name: metrics_path
+      prompt: "Enter the metrics path (default is '/api/v1/allmetrics')"
+      default: "/api/v1/allmetrics"
+      private: no
+
+    - name: format
+      prompt: "Enter the format (default is 'prometheus_all_hosts')"
+      default: "prometheus_all_hosts"
+      private: no
+
+  tasks:
+    - name: Load existing Prometheus config
+      ansible.builtin.slurp:
+        src: /opt/ansible-test/grafana-test/prometheus/prometheus.yml
+      register: prometheus_config
+
+    - name: Convert config to dictionary
+      set_fact:
+        prometheus_dict: "{{ (prometheus_config['content'] | b64decode | from_yaml) }}"
+
+    - name: Add new job configuration
+      set_fact:
+        prometheus_dict: >-
+          {{
+            prometheus_dict | combine({
+              'scrape_configs': prometheus_dict.scrape_configs + [{
+                'job_name': job_name,
+                'metrics_path': metrics_path,
+                'params': {'format': [format]},
+                'static_configs': [{'targets': new_targets.split(',')}]
+              }]
+            }, recursive=True)
+          }}
+
+    - name: Save modified config
+      ansible.builtin.copy:
+        dest: /opt/ansible-test/grafana-test/prometheus/prometheus.yml
+        content: "{{ prometheus_dict | to_yaml }}"

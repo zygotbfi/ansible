@@ -1,0 +1,27 @@
+- name: Copy grafana,prometheus compose and yml
+  hosts: eut
+  become: yes
+  become_user: root
+  tasks:
+    - name: Ensure the directory exists
+      file:
+        path: /opt/ansible-test/grafana-test
+        state: directory
+        mode: '0755'
+
+    - name: Copy docker-compose.yml with dynamic hostname
+      template:
+        src: ./grafana&prometheus/docker-compose.yml
+        dest: /opt/ansible-test/grafana-test/docker-compose.yml
+
+    - name: Ensure the directory exists for prometheus
+      file:
+        path: /opt/ansible-test/grafana-test/prometheus
+        state: directory
+        mode: '0755'
+
+    - name: Copy prometheus.yml
+      copy:
+        src: ./grafana&prometheus/prometheus.j2
+        dest: /opt/ansible-test/grafana-test/prometheus/prometheus.yml
+

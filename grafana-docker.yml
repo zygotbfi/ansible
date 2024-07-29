@@ -25,9 +25,8 @@
         src: ./monitoringfiles/prometheus/prometheus.yml
         dest: /opt/monitoring-stack/grafana/prometheus/prometheus.yml
 
-    - name: Deploy with Docker Compose
-      community.docker.docker_compose:
-        project_src: /opt/monitoring-stack/grafana/docker-compose.yml
-        state: present
-        recreate: smart
+    - name: Run docker-compose up -d
+      command: docker-compose -f /opt/monitoring-stack/grafana/docker-compose.yml up -d
+      # args:
+      #   chdir: /home/youruser
 

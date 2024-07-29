@@ -1,0 +1,53 @@
+- name: Install Docker and Docker Compose
+  hosts: monitoring
+  become: yes
+
+  vars:
+    docker_compose_version: latest
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Ensure dependencies are installed
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+        state: present
+
+    - name: Check if Docker is installed
+      command: "docker --version"
+      ignore_errors: yes
+      register: docker_installed
+
+    - name: Install Docker if not already installed
+      shell: |
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+      when: docker_installed.rc != 0
+
+    - name: Check if Docker Compose is installed
+      command: "docker-compose --version"
+      ignore_errors: yes
+      register: docker_compose_installed
+
+    - name: Get latest Docker Compose version from GitHub
+      when: docker_compose_version == 'latest'
+      uri:
+        url: https://api.github.com/repos/docker/compose/releases/latest
+        return_content: yes
+      register: docker_compose_latest
+
+    - name: Extract latest version number
+      when: docker_compose_version == 'latest'
+      set_fact:
+        docker_compose_version: "{{ docker_compose_latest.json.tag_name }}"
+
+    - name: Install Docker Compose
+      shell: |
+        curl -L "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+      when: docker_compose_installed.rc != 0

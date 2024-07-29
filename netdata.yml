@@ -1,7 +1,6 @@
 - name: Copy Docker Compose and Netdata Config Files
-  hosts: eut
+  hosts: monitoring
   become: yes
-  become_user: root  
   vars_prompt:
     - name: host_name
       prompt: "Enter the host name"
@@ -9,19 +8,19 @@
   tasks:
     - name: Ensure the directory exists
       file:
-        path: /opt/ansible-test/netdata-test
+        path: /opt/monitoring-stack/netdata
         state: directory
         mode: '0755'
 
     - name: Copy docker-compose.yml with dynamic hostname
       template:
-        src: ./netdata/docker-compose.yml.j2
-        dest: /opt/ansible-test/netdata-test/docker-compose.yml
+        src: ./monitoringfiles/netdata/docker-compose.yml.j2
+        dest: /opt/monitoring-stack/netdata/docker-compose.yml
       vars:
         hostname: "{{ host_name }}"
 
     - name: Copy netdata.conf
       copy:
-        src: ./netdata/netdata.conf
-        dest: /opt/ansible-test/netdata-test/netdata.conf
+        src: ./monitoringfiles/netdata/netdata.conf
+        dest: /opt/monitoring-stack/netdata/netdata.conf
 

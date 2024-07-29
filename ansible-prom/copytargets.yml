@@ -1,0 +1,12 @@
+- name: Copy grafana,prometheus compose and yml
+  hosts: monitoring
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Ansible copy files
+    copy:
+      src: ../monitoringfiles/prometheus/
+      dest: /opt/monitoring-stack/grafana/prometheus
+      directory_mode:
+    tags:
+      - parentdir

@@ -1,7 +1,0 @@
----
-- name: Test connection to remote servers
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Ping remote servers
-      ping:

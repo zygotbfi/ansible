@@ -1,0 +1,7 @@
+test:
+  hosts:
+    eut:
+      ansible_host: 94.237.65.245
+      ansible_port: 1351
+    monitoring:
+      ansible_host: 192.168.32.63

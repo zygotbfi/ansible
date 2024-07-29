@@ -81,6 +81,7 @@ services:
     volumes:
       - ../prometheus:/etc/prometheus
       - ../prometheus/prom_data:/prometheus
+      - ../prometheus/targets/:/targets/:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'

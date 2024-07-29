@@ -5,12 +5,12 @@ scrape_configs:
   - job_name: "RDS_WMI"
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/RDS_WMI.yml
+        - targets/RDS_WMI.yml
 
   - job_name: "prometheus"
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/prometheus.yml
+        - targets/prometheus.yml
 
   - job_name: "CLOUD NETDATA"
     metrics_path: /api/v1/allmetrics
@@ -18,7 +18,7 @@ scrape_configs:
       format: [prometheus_all_hosts]
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/CLOUD_NETDATA.yml
+        - targets/CLOUD_NETDATA.yml
 
   - job_name: "hana & SL server"
     metrics_path: /api/v1/allmetrics
@@ -26,12 +26,12 @@ scrape_configs:
       format: [prometheus_all_hosts]
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/hana_SL_server.yml
+        - targets/hana_SL_server.yml
 
   - job_name: "node-exporters"
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/node-exporters.yml
+        - targets/node-exporters.yml
 
   - job_name: "data-analytics_PG"
     metrics_path: /api/v1/allmetrics
@@ -39,7 +39,7 @@ scrape_configs:
       format: [prometheus_all_hosts]
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/data-analytics_PG.yml
+        - targets/data-analytics_PG.yml
 
   - job_name: "ETL-PENTAHO"
     metrics_path: /api/v1/allmetrics
@@ -47,9 +47,9 @@ scrape_configs:
       format: [prometheus_all_hosts]
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/ETL-PENTAHO.yml
+        - targets/ETL-PENTAHO.yml
 
   - job_name: "ASP.NET"
     file_sd_configs:
       - files:
-        - /opt/monitoring-stack/prometheus/targets/ASP.NET.yml
+        - targets/ASP.NET.yml

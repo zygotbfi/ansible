@@ -31,10 +31,11 @@
         state: directory
         mode: '0755'
 
+
     - name: Copy all targets
       copy:
-        src: ./monitoringfiles/prometheus/targets/*
-        dest: /opt/monitoring-stack/prometheus/
+        src: ./monitoringfiles/prometheus/targets/
+        dest: /opt/monitoring-stack/prometheus/targets/
 
     - name: Ensure the directory exists for loki
       file:

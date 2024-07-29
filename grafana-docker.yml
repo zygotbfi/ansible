@@ -25,6 +25,16 @@
         src: ./monitoringfiles/prometheus/prometheus.yml
         dest: /opt/monitoring-stack/prometheus/prometheus.yml
 
+    - name: Copy loki.yml
+      copy:
+        src: ./monitoringfiles/loki/loki-local-config.yml
+        dest: /opt/monitoring-stack/loki/loki-local-config.yml
+
+    - name: Copy promtail.yml
+      copy:
+        src: ./monitoringfiles/promtail/promtail-local-config.yml
+        dest: /opt/monitoring-stack/promtail/promtail-local-config.yml
+
     - name: Run docker-compose up -d
       command: docker compose up -d
       args:

@@ -26,7 +26,7 @@
         dest: /opt/monitoring-stack/grafana/prometheus/prometheus.yml
 
     - name: Run docker-compose up -d
-      command: docker-compose -f /opt/monitoring-stack/grafana/docker-compose.yml up -d
+      command: docker compose up -d
       args:
         chdir: /opt/monitoring-stack/grafana/
 

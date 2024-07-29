@@ -25,11 +25,22 @@
         src: ./monitoringfiles/prometheus/prometheus.yml
         dest: /opt/monitoring-stack/prometheus/prometheus.yml
 
+    - name: Ensure the directory exists for loki
+      file:
+        path: /opt/monitoring-stack/loki
+        state: directory
+        mode: '0755'
+
     - name: Copy loki.yml
       copy:
         src: ./monitoringfiles/loki/loki-local-config.yml
         dest: /opt/monitoring-stack/loki/loki-local-config.yml
 
+    - name: Ensure the directory exists for promtail
+      file:
+        path: /opt/monitoring-stack/promtail
+        state: directory
+        mode: '0755'
     - name: Copy promtail.yml
       copy:
         src: ./monitoringfiles/promtail/promtail-local-config.yml

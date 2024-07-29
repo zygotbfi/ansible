@@ -52,11 +52,15 @@
         state: directory
         mode: '0777'
 
-    - name: Ensure the directory exists for grafana_data
-      file:
-        path: /opt/monitoring-stack/grafana/grafana_data
-        state: directory
-        mode: '0777'
+    # - name: Ensure the directory exists for grafana_data
+    #   file:
+    #     path: /opt/monitoring-stack/grafana/grafana_data
+    #     state: directory
+    #     mode: '0777'
+      
+    - name: Create Docker volume for grafana and prometheus
+      command: docker volume create grafana_data
+      ignore_errors: yes
     # - name: Change permissions of the directory
     #   file:
     #     path: /opt/monitoring-stack/prometheus/prom_data

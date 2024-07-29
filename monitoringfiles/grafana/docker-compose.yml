@@ -1,58 +1,86 @@
 version: "3.8"
 name: monitoring-stack
+x-environment: &oncall-environment
+  DATABASE_TYPE: sqlite3
+  BROKER_TYPE: redis
+  BASE_URL: $DOMAIN
+  SECRET_KEY: $SECRET_KEY
+  FEATURE_PROMETHEUS_EXPORTER_ENABLED: ${FEATURE_PROMETHEUS_EXPORTER_ENABLED:-false}
+  PROMETHEUS_EXPORTER_SECRET: ${PROMETHEUS_EXPORTER_SECRET:-}
+  REDIS_URI: redis://redis:6379/0
+  DJANGO_SETTINGS_MODULE: settings.hobby
+  CELERY_WORKER_QUEUE: "default,critical,long,slack,telegram,webhook,retry,celery,grafana"
+  CELERY_WORKER_CONCURRENCY: "1"
+  CELERY_WORKER_MAX_TASKS_PER_CHILD: "100"
+  CELERY_WORKER_SHUTDOWN_INTERVAL: "65m"
+  CELERY_WORKER_BEAT_ENABLED: "True"
+  GRAFANA_API_URL: http://grafana:3000
+  FEATURE_TELEGRAM_INTEGRATION_ENABLED: "True" 
+  TELEGRAM_TOKEN: 7030160240:AAETyBt8ZVGa565aGFjHZQAVBzfITvNBy1Y
+  TELEGRAM_WEBHOOK_HOST: https://workable-cheaply-coyote.ngrok-free.app
 services:
-  grafana:
-    image: grafana/grafana-enterprise:latest
-    container_name: grafana
-    restart: unless-stopped
+  engine:
+    image: grafana/oncall:latest
+    restart: always
+    ports:
+      - "8081:8080"
+    command: sh -c "uwsgi --ini uwsgi.ini"
+    environment: *oncall-environment
     volumes:
-      - ./prometheus_grafana_data:/var/lib/grafana
-    ports:
-     - '3000:3000'
-    environment:
-     GF_SERVER_DOMAIN: grafana.biotechfarms.net
-     GF_RENDERING_SERVER_URL: http://94.237.65.245:8081/render
-     GF_RENDERING_CALLBACK_URL: http://94.237.65.245:3000/
-     GF_LOG_FILTERS: rendering:error
-     GF_PATHS_PROVISIONING: /etc/grafana/provisioning
-     GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
-    entrypoint:
-     - sh
-     - -euc
-     - |
-        mkdir -p /etc/grafana/provisioning/datasources
-        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
-        apiVersion: 1
-        datasources:
-        - name: Loki
-          type: loki
-          access: proxy 
-          orgId: 1
-          url: http://grafana:3100
-          basicAuth: false
-          isDefault: true
-          version: 1
-          editable: false
-        EOF
-        /run.sh   
-    networks:
-     - grafana
-     
-  renderer:
-    image: grafana/grafana-image-renderer:latest
-    container_name: grafana-renderer
-    ports:
-      - 8081:8081    
-    networks:
-     - grafana
- 
+      - ../oncall/oncall_data:/var/lib/oncall
+    depends_on:
+      oncall_db_migration:
+        condition: service_started
+      redis:
+        condition: service_healthy
+  celery:
+    image: grafana/oncall:latest
+    restart: always
+    command: sh -c "./celery_with_exporter.sh"
+    environment: *oncall-environment
+    volumes:
+      - ../oncall/oncall_data:/var/lib/oncall
+    depends_on:
+      oncall_db_migration:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+  oncall_db_migration:
+    image: grafana/oncall:latest
+    command: python manage.py migrate --noinput
+    environment: *oncall-environment
+    volumes:
+      - ../oncall/oncall_data:/var/lib/oncall
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.0.5
+    restart: always
+    expose:
+      - 6379
+    volumes:
+      - ../redis/redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
     restart: unless-stopped
     volumes:
       - ../prometheus:/etc/prometheus
-      - ../prometheus/prom_data:/prometheus
+      - ../prom_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -60,11 +88,75 @@ services:
       - '--log.level=error'
       - '--web.enable-admin-api'
     ports:
-     - '9091:9090'
-    networks:
-     - grafana
-     
+      - '9091:9090'
+
+
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+    ports:
+      - '3000:3000'
+    environment:
+      GF_SERVER_DOMAIN: grafana.biotechfarms.net
+      GF_RENDERING_SERVER_URL: http://94.237.65.245:8081/render
+      GF_RENDERING_CALLBACK_URL: http://94.237.65.245:3000/
+      GF_LOG_FILTERS: rendering:error
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: grafana-oncall-app
+      GF_INSTALL_PLUGINS: grafana-oncall-app 
+    profiles:
+      - with_grafana
+    entrypoint:
+      - sh
+      - -euc
+      - |
+          mkdir -p /etc/grafana/provisioning/datasources
+          cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+          apiVersion: 1
+          datasources:
+          - name: Loki
+            type: loki
+            access: proxy
+            orgId: 1
+            url: http://grafana:3100
+            basicAuth: false
+            isDefault: true
+            version: 1
+            editable: false
+          EOF
+          /run.sh
+
+  loki:
+    image: grafana/loki:latest
+    container_name: grafana-loki
+    restart: always
+    ports:
+     - 3100:3100
+    volumes:
+     - ./loki-local-config.yml:/etc/loki/local-config.yml
+    command: -config.file=/etc/loki/local-config.yml
+
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: grafana-promtail
+    restart: always
+    volumes:
+     - /var/log:/var/log
+     - ./promtail-local-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    environment:
+      - NGROK_AUTHTOKEN=2gAKYUK0F6wYvGvDWHqYJccaeHM_585kpS9kC1dhLWik2KEPx
+    command: ["http", "--domain=workable-cheaply-coyote.ngrok-free.app", "8081"]
+    network_mode: "host"
 
 networks:
-  grafana:
-   
+  default:
+    name: monitoring

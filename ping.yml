@@ -1,5 +1,6 @@
 - name: Ping Test
   hosts: monitoring
+  become_user: root
   tasks:
     - name: Ping the hosts
       ansible.builtin.ping:

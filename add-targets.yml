@@ -2,7 +2,7 @@
   hosts: eut
   gather_facts: no
   become: yes  
-
+  become_user: root
   tasks:
     - name: Ensure backup directory exists
       ansible.builtin.file:

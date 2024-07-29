@@ -1,7 +1,7 @@
 - name: Install Docker and Docker Compose
   hosts: monitoring
   become: yes
-
+  become_user: root
   vars:
     docker_compose_version: latest
 

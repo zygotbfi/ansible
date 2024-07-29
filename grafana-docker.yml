@@ -1,6 +1,7 @@
 - name: Copy grafana,prometheus compose and yml
   hosts: monitoring
   become: yes
+  become_user: root
   tasks:
     - name: Ensure the directory exists
       file:
@@ -23,4 +24,10 @@
       copy:
         src: ./monitoringfiles/prometheus/prometheus.yml
         dest: /opt/monitoring-stack/grafana/prometheus/prometheus.yml
+
+    - name: Deploy with Docker Compose
+      community.docker.docker_compose:
+        project_src: /opt/monitoring-stack/grafana/docker-compose.yml
+        state: present
+        recreate: smart
 

@@ -2,7 +2,7 @@
   hosts: eut
   gather_facts: no
   become: yes
-
+  become_user: root  
   vars_prompt:
     - name: job_name
       prompt: "Enter the new job name"

@@ -46,6 +46,24 @@
         src: ./monitoringfiles/promtail/promtail-local-config.yml
         dest: /opt/monitoring-stack/promtail/promtail-local-config.yml
 
+    - name: Ensure the directory exists for prom_data
+      file:
+        path: /opt/monitoring-stack/prometheus/prom_data
+        state: directory
+        mode: '0777'
+
+    - name: Ensure the directory exists for grafana_data
+      file:
+        path: /opt/monitoring-stack/grafana/grafana_data
+        state: directory
+        mode: '0777'
+    # - name: Change permissions of the directory
+    #   file:
+    #     path: /opt/monitoring-stack/prometheus/prom_data
+    #     mode: '0755'
+    #     owner: youruser
+    #     group: yourgroup
+
     - name: Run docker-compose up -d
       command: docker compose up -d
       args:

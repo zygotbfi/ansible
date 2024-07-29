@@ -25,6 +25,17 @@
         src: ./monitoringfiles/prometheus/prometheus.yml
         dest: /opt/monitoring-stack/prometheus/prometheus.yml
 
+    - name: Ensure the directory exists for prometheus targets
+      file:
+        path: /opt/monitoring-stack/prometheus/targets
+        state: directory
+        mode: '0755'
+
+    - name: Copy all targets
+      copy:
+        src: ./monitoringfiles/prometheus/targets/*
+        dest: /opt/monitoring-stack/prometheus/
+
     - name: Ensure the directory exists for loki
       file:
         path: /opt/monitoring-stack/loki
